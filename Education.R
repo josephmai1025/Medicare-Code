@@ -60,16 +60,31 @@ get_stars <- function(b, se) {
   if (is.na(p)) "" else if (p < 0.01) "***" else if (p < 0.05) "**" else if (p < 0.1) "*" else ""
 }
 fmt <- function(est, se) paste0(sprintf("%.3f", est), get_stars(est, se), " (", sprintf("%.3f", se), ")")
+fmt_est <- function(est, se) paste0(sprintf("%.3f", est), get_stars(est, se))
+fmt_se  <- function(se) paste0("(", sprintf("%.3f", se), ")")
+
+fmt_p <- function(p) ifelse(p < 0.001, "<0.001", sprintf("%.3f", p))
+
+# NEW: parallel helpers for exact p-value and 95% CI, same est/se inputs as fmt()
+stat_p <- function(est, se) {
+  if (is.na(est) || is.na(se) || se == 0 || is.infinite(se)) return(NA)
+  p <- 2 * (1 - pnorm(abs(est / se)))
+  fmt_p(signif(p, 3))
+}
+stat_ci <- function(est, se) {
+  if (is.na(est) || is.na(se)) return(NA)
+  paste0("[", round(est - qnorm(0.975) * se, 3), ", ", round(est + qnorm(0.975) * se, 3), "]")
+}
 
 #### EDUCATION ANALYSIS ####
 
 fit_rd_multi_edu <- function(df, outcome_var, enroll_var = "insured", h = NULL) {
   if (is.null(h)) h <- get_bw(outcome_var)
   temp <- df %>%
-    filter(edu3 %in% c("Bachelors", "HSOrSomeCollege", "NoHS")) %>%
+    filter(edu3 %in% c("Bachelors+", "HS/Some College", "No HS")) %>%
     mutate(
-      g_bach = as.numeric(edu3 == "Bachelors"),
-      g_nohs = as.numeric(edu3 == "NoHS")
+      g_bach = as.numeric(edu3 == "Bachelors+"),
+      g_nohs = as.numeric(edu3 == "No HS")
     ) %>%
     filter(
       !is.na(.data[[outcome_var]]), !is.na(.data[[enroll_var]]),
@@ -133,10 +148,30 @@ delta_wald_edu <- function(df, outcome_var, enroll_var = "insured", outcome_labe
   data.frame(
     Outcome = outcome_label,
     HSOrSomeCollege = fmt(w_hscollege, se_hscollege),
+    HSOrSomeCollege_EST = fmt_est(w_hscollege, se_hscollege),
+    HSOrSomeCollege_SE = fmt_se(se_hscollege),
+    HSOrSomeCollege_P = stat_p(w_hscollege, se_hscollege),
+    HSOrSomeCollege_CI = stat_ci(w_hscollege, se_hscollege),
     Bachelors = fmt(w_bach, se_bach),
+    Bachelors_EST = fmt_est(w_bach, se_bach),
+    Bachelors_SE = fmt_se(se_bach),
+    Bachelors_P = stat_p(w_bach, se_bach),
+    Bachelors_CI = stat_ci(w_bach, se_bach),
     NoHS = fmt(w_nohs, se_nohs),
+    NoHS_EST = fmt_est(w_nohs, se_nohs),
+    NoHS_SE = fmt_se(se_nohs),
+    NoHS_P = stat_p(w_nohs, se_nohs),
+    NoHS_CI = stat_ci(w_nohs, se_nohs),
     Diff_Bachelors = fmt(diff_bach, se_diff_bach),
+    Diff_Bachelors_EST = fmt_est(diff_bach, se_diff_bach),
+    Diff_Bachelors_SE = fmt_se(se_diff_bach),
+    Diff_Bachelors_P = stat_p(diff_bach, se_diff_bach),
+    Diff_Bachelors_CI = stat_ci(diff_bach, se_diff_bach),
     Diff_NoHS = fmt(diff_nohs, se_diff_nohs),
+    Diff_NoHS_EST = fmt_est(diff_nohs, se_diff_nohs),
+    Diff_NoHS_SE = fmt_se(se_diff_nohs),
+    Diff_NoHS_P = stat_p(diff_nohs, se_diff_nohs),
+    Diff_NoHS_CI = stat_ci(diff_nohs, se_diff_nohs),
     stringsAsFactors = FALSE
   )
 }
@@ -165,18 +200,44 @@ first_stage_row_edu <- function(df, enroll_var = "insured") {
   data.frame(
     Outcome = "Insured (First Stage)",
     HSOrSomeCollege = fmt(fs_hscollege, se_hscollege),
+    HSOrSomeCollege_EST = fmt_est(fs_hscollege, se_hscollege),
+    HSOrSomeCollege_SE = fmt_se(se_hscollege),
+    HSOrSomeCollege_P = stat_p(fs_hscollege, se_hscollege),
+    HSOrSomeCollege_CI = stat_ci(fs_hscollege, se_hscollege),
     Bachelors = fmt(fs_bach, se_bach),
+    Bachelors_EST = fmt_est(fs_bach, se_bach),
+    Bachelors_SE = fmt_se(se_bach),
+    Bachelors_P = stat_p(fs_bach, se_bach),
+    Bachelors_CI = stat_ci(fs_bach, se_bach),
     NoHS = fmt(fs_nohs, se_nohs),
+    NoHS_EST = fmt_est(fs_nohs, se_nohs),
+    NoHS_SE = fmt_se(se_nohs),
+    NoHS_P = stat_p(fs_nohs, se_nohs),
+    NoHS_CI = stat_ci(fs_nohs, se_nohs),
     Diff_Bachelors = fmt(diff_bach, se_diff_bach),
+    Diff_Bachelors_EST = fmt_est(diff_bach, se_diff_bach),
+    Diff_Bachelors_SE = fmt_se(se_diff_bach),
+    Diff_Bachelors_P = stat_p(diff_bach, se_diff_bach),
+    Diff_Bachelors_CI = stat_ci(diff_bach, se_diff_bach),
     Diff_NoHS = fmt(diff_nohs, se_diff_nohs),
+    Diff_NoHS_EST = fmt_est(diff_nohs, se_diff_nohs),
+    Diff_NoHS_SE = fmt_se(se_diff_nohs),
+    Diff_NoHS_P = stat_p(diff_nohs, se_diff_nohs),
+    Diff_NoHS_CI = stat_ci(diff_nohs, se_diff_nohs),
     stringsAsFactors = FALSE
   )
 }
 
 make_first_stage_table_edu <- function(df, caption_text) {
   fs <- first_stage_row_edu(df)
-  fs_row <- paste0(fs$Outcome, " & ", fs$HSOrSomeCollege, " & ", fs$Bachelors, " & ", fs$NoHS,
-                   " & ", fs$Diff_Bachelors, " & ", fs$Diff_NoHS, " \\\\\n")
+  est_row <- paste0("\\textbf{", fs$Outcome, "} & ", fs$HSOrSomeCollege_EST, " & ", fs$Bachelors_EST, " & ", fs$NoHS_EST,
+                    " & ", fs$Diff_Bachelors_EST, " & ", fs$Diff_NoHS_EST, " \\\\\n")
+  se_row  <- paste0(" & ", fs$HSOrSomeCollege_SE, " & ", fs$Bachelors_SE, " & ", fs$NoHS_SE,
+                    " & ", fs$Diff_Bachelors_SE, " & ", fs$Diff_NoHS_SE, " \\\\\n")
+  p_row  <- paste0("P-value & ", fs$HSOrSomeCollege_P, " & ", fs$Bachelors_P, " & ", fs$NoHS_P,
+                   " & ", fs$Diff_Bachelors_P, " & ", fs$Diff_NoHS_P, " \\\\\n")
+  ci_row <- paste0("95\\% CI & ", fs$HSOrSomeCollege_CI, " & ", fs$Bachelors_CI, " & ", fs$NoHS_CI,
+                   " & ", fs$Diff_Bachelors_CI, " & ", fs$Diff_NoHS_CI, " \\\\\n")
   
   latex_table <- paste0(
     "\\begin{table}[htbp]\n",
@@ -184,13 +245,18 @@ make_first_stage_table_edu <- function(df, caption_text) {
     "\\caption{", caption_text, "}\n",
     "\\label{tab:first_stage_edu}\n",
     "\\small\n",
+    "\\resizebox{\\textwidth}{!}{%\n",
     "\\begin{tabular}{lccccc}\n",
     "\\hline\\hline\n",
     " & HS/Some College & Bachelors+ & No HS & Diff (Bachelors+) & Diff (No HS) \\\\\n",
     "\\hline\n",
-    fs_row,
+    est_row,
+    se_row,
+    p_row,
+    ci_row,
     "\\hline\n",
-    "\\end{tabular}\n",
+    "\\end{tabular}%\n",
+    "}\n",
     "\\begin{tablenotes}\n",
     "\\footnotesize\n",
     "\\item \\textit{Notes:} First-stage discontinuity in insurance coverage at age 65, by ",
@@ -212,7 +278,8 @@ make_edu_table_combined <- function(df, caption_text) {
   })
   table_out <- do.call(rbind, rows)
   
-  kable(table_out, format = "html", caption = caption_text,
+  kable(table_out[, c("Outcome", "HSOrSomeCollege", "Bachelors", "NoHS", "Diff_Bachelors", "Diff_NoHS")],
+        format = "html", caption = caption_text,
         align = c("l", rep("c", 5)), booktabs = TRUE, escape = FALSE,
         col.names = c("Outcome", "Bachelors+", "No HS", "HS/Some College",
                       "Diff (No HS)", "Diff (HS/Some College)")) %>%
@@ -229,9 +296,20 @@ make_edu_table_latex <- function(df, caption_text) {
   
   body <- paste(sapply(1:nrow(table_df), function(i) {
     row <- table_df[i, ]
-    est_row <- paste(row$HSOrSomeCollege, row$Bachelors, row$NoHS,
-                     row$Diff_Bachelors, row$Diff_NoHS, sep = " & ")
-    paste0(row$Outcome, " & ", est_row, " \\\\\n")
+    est_row <- paste(row$HSOrSomeCollege_EST, row$Bachelors_EST, row$NoHS_EST,
+                     row$Diff_Bachelors_EST, row$Diff_NoHS_EST, sep = " & ")
+    se_row  <- paste(row$HSOrSomeCollege_SE, row$Bachelors_SE, row$NoHS_SE,
+                     row$Diff_Bachelors_SE, row$Diff_NoHS_SE, sep = " & ")
+    p_row   <- paste(row$HSOrSomeCollege_P, row$Bachelors_P, row$NoHS_P,
+                     row$Diff_Bachelors_P, row$Diff_NoHS_P, sep = " & ")
+    ci_row  <- paste(row$HSOrSomeCollege_CI, row$Bachelors_CI, row$NoHS_CI,
+                     row$Diff_Bachelors_CI, row$Diff_NoHS_CI, sep = " & ")
+    paste0(
+      "\\textbf{", row$Outcome, "} & ", est_row, " \\\\\n",
+      " & ", se_row, " \\\\\n",
+      "P-value & ", p_row, " \\\\\n",
+      "95\\% CI & ", ci_row, " \\\\\n\n"
+    )
   }), collapse = "")
   
   latex_table <- paste0(
