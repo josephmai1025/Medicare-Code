@@ -61,7 +61,7 @@ get_stars <- function(b, se) {
 }
 fmt <- function(est, se) paste0(sprintf("%.3f", est), get_stars(est, se), " (", sprintf("%.3f", se), ")")
 
-#### RACE ANALYSIS (White / Black / Other) ####
+#### EDUCATION ANALYSIS ####
 
 fit_rd_multi_edu <- function(df, outcome_var, enroll_var = "insured", h = NULL) {
   if (is.null(h)) h <- get_bw(outcome_var)
@@ -204,7 +204,7 @@ make_first_stage_table_edu <- function(df, caption_text) {
 
 make_first_stage_table_edu(data, "First-Stage Discontinuity in Insurance Coverage by Educational Attainment")
 
-#### RACE LATE ESTIMATES ####
+#### EDUCATION LATE ESTIMATES ####
 
 make_edu_table_combined <- function(df, caption_text) {
   rows <- lapply(seq_along(outcomes), function(i) {
