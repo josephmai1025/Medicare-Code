@@ -63,19 +63,21 @@ run_fuzzy_rd <- function(y_var, var_name, fuzzy_var) {
     weights = data$sampweight
   )
   
-  est <- rd$coef[1]
+  est <- rd$coef[2]
   se  <- rd$se[3]
-  z <- est / se
-  p_val <- 2 * (1 - pnorm(abs(z)))
-  stars <- ifelse(p_val < 0.01, "***",
-                  ifelse(p_val < 0.05, "**",
-                         ifelse(p_val < 0.1, "*", "")))
+  p   <- rd$pv[3] 
+  stars <- ifelse(p < 0.01, "***",
+                  ifelse(p < 0.05, "**",
+                         ifelse(p < 0.1, "*", "")))
   
   return(data.frame(
     Outcome = var_name,
     Bandwidth = round(rd$bws[1, 1], 2),
     Estimate = round(est, 3),
     SE = round(se, 3),
-    Stars = stars
+    Stars = stars,
+    P         = ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)),  
+    CI_lo     = round(rd$ci[3, 1], 3),                           
+    CI_hi     = round(rd$ci[3, 2], 3)                           
   ))
 }
