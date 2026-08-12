@@ -24,8 +24,7 @@ run_rd <- function(y_var, var_name, fuzzy_var) {
   
   est <- rd$coef[2]
   se  <- rd$se[3]
-  z   <- est / se
-  p   <- 2 * (1 - pnorm(abs(z)))
+  p   <- rd$pv[3] 
   
   stars <- ifelse(p < 0.01, "***",
                   ifelse(p < 0.05, "**",
@@ -36,7 +35,10 @@ run_rd <- function(y_var, var_name, fuzzy_var) {
     Bandwidth = round(rd$bws[1, 1], 2),
     Estimate = round(est, 3),
     SE = round(se, 3),
-    Stars = stars
+    Stars = stars,
+    P         = ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)),  
+    CI_lo     = round(rd$ci[3, 1], 3),                            
+    CI_hi     = round(rd$ci[3, 2], 3)   
   ))
 }
 
@@ -86,7 +88,9 @@ itt_7 <- results_df_labeled %>%
   mutate(
     est = paste0(Estimate, Stars),
     se  = paste0("(", SE, ")"),
-    bw  = as.character(Bandwidth)
+    bw  = as.character(Bandwidth),
+    p   = P,                                           
+    ci  = paste0("[", CI_lo, ", ", CI_hi, "]") 
   )
 
 order_vec <- c(
@@ -102,10 +106,14 @@ order_vec <- c(
 est_lookup <- setNames(itt_7$est, itt_7$Outcome)
 se_lookup  <- setNames(itt_7$se, itt_7$Outcome)
 bw_lookup  <- setNames(itt_7$bw, itt_7$Outcome)
+p_lookup   <- setNames(itt_7$p, itt_7$Outcome)   
+ci_lookup  <- setNames(itt_7$ci, itt_7$Outcome)
 
 est_row <- paste(est_lookup[order_vec], collapse = " & ")
 se_row  <- paste(se_lookup[order_vec], collapse = " & ")
 bw_row  <- paste(bw_lookup[order_vec], collapse = " & ")
+p_row   <- paste(p_lookup[order_vec], collapse = " & ")  
+ci_row  <- paste(ci_lookup[order_vec], collapse = " & ")
 col_names <- paste(order_vec, collapse = " & ")
 col_nums  <- paste(paste0("(", seq_along(order_vec), ")"), collapse = " & ")
 
@@ -121,6 +129,8 @@ latex_table <- paste0(
   "\\hline\n",
   "Medicare Eligibility & ", est_row, " \\\\\n",
   " & ", se_row, " \\\\\n",
+  "P-value & ", p_row, " \\\\\n",                     
+  "95\\% CI & ", ci_row, " \\\\\n", 
   "Bandwidth (h) & ", bw_row, " \\\\\n",
   "\\hline\n",
   "\\end{tabular}%\n",
@@ -268,6 +278,8 @@ print(employment_df)
 
 est_row <- paste0(employment_df$Estimate, employment_df$Stars)
 se_row  <- paste0("(", employment_df$SE, ")")
+p_row   <- employment_df$P                                                  
+ci_row  <- paste0("[", employment_df$CI_lo, ", ", employment_df$CI_hi, "]")  
 bw_row  <- as.character(employment_df$Bandwidth)
 
 latex_table <- paste0(
@@ -281,6 +293,8 @@ latex_table <- paste0(
   "\\hline\n",
   "Medicare Eligibility & ", est_row, " \\\\\n",
   " & ", se_row, " \\\\\n",
+  "P-value & ", p_row, " \\\\\n",                    
+  "95\\% CI & ", ci_row, " \\\\\n",  
   "Bandwidth (h) & ", bw_row, " \\\\\n",
   "\\hline\n",
   "\\end{tabular}\n",
@@ -316,8 +330,8 @@ late_df <- do.call(rbind, late_results)
 late_df$Estimate_SE <- paste0(
   late_df$Estimate,
   late_df$Stars,
-  " (", late_df$SE, ")"
-)
+  " (", late_df$SE, ")")
+  late_df$CI_str <- paste0("[", late_df$CI_lo, ", ", late_df$CI_hi, "]") 
 
 print(late_df)
 
@@ -348,7 +362,11 @@ order_vec <- c(
 )
 
 late_lookup <- setNames(late_df$Estimate_SE, late_df$Outcome)
+p_lookup    <- setNames(late_df$P, late_df$Outcome)
+ci_lookup   <- setNames(late_df$CI_str, late_df$Outcome)
 late_row <- paste(late_lookup[order_vec], collapse = " & ")
+p_row     <- paste(p_lookup[order_vec], collapse = " & ")
+ci_row    <- paste(ci_lookup[order_vec], collapse = " & ")
 col_names <- paste(order_vec, collapse = " & ")
 col_nums <- paste(paste0("(", seq_along(order_vec), ")"), collapse = " & ")
 bw_lookup_late <- setNames(as.character(late_df$Bandwidth), late_df$Outcome)
@@ -365,6 +383,8 @@ latex_table <- paste0(
   " & ", col_nums, " \\\\\n",
   "\\hline\n",
   "Medicare Coverage & ", late_row, " \\\\\n",
+  "P-value & ", p_row, " \\\\\n",                        
+  "95\\% CI & ", ci_row, " \\\\\n",    
   "Bandwidth (h) & ", bw_row_late, " \\\\\n",
   "\\hline\n",
   "\\end{tabular}%\n",
