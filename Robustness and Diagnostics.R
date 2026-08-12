@@ -8,7 +8,7 @@ ensure_package("rdlocrand")
 ensure_package("fixest")
 
 data_path <- find_data_file()
-data <- read_dta(data_path)
+data <- load_data_file(data_path)
 data <- subset(data, astatflg == 1 & age >= 0 & age <= 100)
 data <- data[!is.na(data$insured) & !is.na(data$age) & !is.na(data$sampweight), ]
 
@@ -57,7 +57,7 @@ run_fuzzy_rd_bw <- function(df, y_var_name, h) {
     weights = sub$sampweight
   )
   
-  est <- rd$coef[1]
+  est <- rd$coef[2]
   se  <- rd$se[3]
   z <- est / se
   p_val <- 2 * (1 - pnorm(abs(z)))

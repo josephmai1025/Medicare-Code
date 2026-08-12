@@ -6,7 +6,7 @@ ensure_package("dplyr")
 ensure_package("tidyr")
 
 data_path <- find_data_file()
-data <- read_dta(data_path)
+data <- load_data_file(data_path)
 data <- subset(data, astatflg == 1 & age >= 0 & age <= 100)
 
 #### Helper RD Function ####

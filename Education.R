@@ -7,7 +7,7 @@ ensure_package("knitr")
 ensure_package("kableExtra")
 
 data_path <- find_data_file()
-data <- read_dta(data_path)
+data <- load_data_file(data_path)
 data <- subset(data, astatflg == 1 & age >= 0 & age <= 100)
 
 #### LOOKUP BANDWIDTHS ####
