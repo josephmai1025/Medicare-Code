@@ -20,7 +20,7 @@ data$age_c <- data$age - 65
 # -----------------------------------------------------------------------------
 bw_lookup <- c(
   insured        = 5.47,
-  employed       = 5.47,
+  employed       = 2.93,
   health_r       = 7.20,
   flu_shot       = 5.68,
   presc_med      = 4.72,
@@ -269,22 +269,20 @@ pretty_ols_value <- function(x) {
     "No HS" = "No HS",
     "insured" = "Insured",
     "employed" = "Employed",
-    "health_r" = "Self-reported health",
-    "flu_shot" = "Influenza vaccination",
-    "presc_med" = "Prescription medication use",
-    "wellvisit_1yr" = "Annual wellness visit",
-    "cholcheck_1yr" = "Cholesterol screening",
-    "bpcheck_1yr" = "Blood pressure screening",
+    "health_r" = "Self-Reported Health",
+    "flu_shot" = "Flu Shot",
+    "presc_med" = "Prescription Medication",
+    "wellvisit_1yr" = "Well Visit",
+    "cholcheck_1yr" = "Cholesterol Check",
+    "bpcheck_1yr" = "Blood Pressure Check",
     "age65:g_bach" = "Age 65+ × Bachelor's",
     "age65:g_nohs" = "Age 65+ × No HS",
-    "age65:g_mohs" = "Age 65+ × No HS",
     "g_bach" = "Bachelor's group",
     "g_nohs" = "No HS group",
-    "g_mohs" = "No HS group",
     "age_x_treat" = "Age centered × 65+",
     "age_c:above_65" = "Age centered × 65+",
     "above_65:age_c" = "65+ × Age centered",
-    "above_65" = "65+ indicator",
+    "above_65" = "Age 65+",
     "age65" = "Age 65+",
     "age_c" = "Age centered",
     "Intercept" = "Intercept"
@@ -497,3 +495,4 @@ if (!export_success) {
 # write.csv(manual_rd_fit, file = file.path(output_dir, "manual_rd_ols_fit_statistics.csv"), row.names = FALSE)
 
 cat("\nPublication-ready regression tables have been exported to the output/ directory.\n")
+
